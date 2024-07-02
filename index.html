@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hi</title>
+	</head>
+	<body>
+		<script>
+			function rightPad(text, desiredLength, character = '\0') {
+				// console.log(text.length)
+				const padQty = desiredLength - text.length;
+
+				if (padQty < 0) {
+					throw new Error('can\'t pad by negative amount');
+				}
+
+				for (var i = 0; i < padQty; ++i) {
+					text += character;
+				}
+
+				return text;
+			}
+
+			const tarFilename = 'something.tar';
+
+			const nullChar = String.fromCharCode(0);
+
+			const name = rightPad('alongerfilenamefortestingpurposes.txt', 100);
+			const mode = rightPad('0000644', 8);
+			const uid = rightPad('0001750', 8);
+			const gid = rightPad('0001750', 8);
+			const size = rightPad('00000000010', 12);
+
+			const time = Math.floor(new Date().getTime()/10000.0);
+			//const time = Math.floor(new Date().getTime()/1000.0);
+			const mtime = rightPad('0' + String(time), 12);
+
+			const chksum = rightPad('020565', 8);
+
+			// const metaDataToFigureOut = '0000644000175000017500000000206714637306226022301';
+			const metaDataToFigureOut = `${mode}${uid}${gid}${size}${mtime}${chksum}`;
+
+			const typeFlag = '0';
+			const linkName = rightPad('', 100);
+			const magic = rightPad('ustar', 6);
+
+			const uname = rightPad('kminton', 32);
+			const gname = rightPad('kminton', 32);
+			const permissions = `${uname}${gname}`;
+
+			// todo fix this 
+			const devMajorDevMinorAndPrefix = rightPad('', 183);
+
+			const header = `${name}${metaDataToFigureOut} ${typeFlag}${linkName}${magic}  \0${permissions}${devMajorDevMinorAndPrefix}`;
+
+			const content = 'etc etc';
+			// testing
+			var fileone = new File([content], 'alongerfilenamefortestingpurposes.txt', {type: 'text/plain'});
+			console.log('fileone');
+			console.log(fileone.size);
+
+			const reader = new FileReader();
+
+
+			let output = `${header}${content}\n`;
+
+			output += rightPad('', 9720);
+
+
+			const tarFile = new File([output], tarFilename, {type: 'application/x-tar'});
+			const url = URL.createObjectURL(tarFile);
+			const anchor = document.createElement('a');
+			anchor.href = url;
+			anchor.innerText = 'link to tar file';
+			document.body.appendChild(anchor);
+
+			// tarFile.size
+		</script>
+	</body>
+</html>
