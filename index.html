@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Hi</title>
+		<title>TapeARchive</title>
 	</head>
 	<body>
 		<script>
 			function rightPad(text, desiredLength, character = '\0') {
-				// console.log(text.length)
 				const padQty = desiredLength - text.length;
 
 				if (padQty < 0) {
@@ -34,6 +33,9 @@
 				return text;
 			}
 
+			const filePermissions = '0000644';
+			const dirPermissions = '0000755';
+
 			const tarFilename = 'something.tar';
 			const nullChar = String.fromCharCode(0);
 
@@ -42,11 +44,12 @@
 			var file = new File([content], 'alongerfilenamefortestingpurposes.txt', {type: 'text/plain'});
 
 			const name = rightPad(file.name, 100);
-			const mode = rightPad('0000644', 8);
+			const mode = rightPad(filePermissions, 8);
+
+			// @todo check if these can be more or less anything
 			const uid = rightPad('0001750', 8);
 			const gid = rightPad('0001750', 8);
 
-			// add 1 for newline character
 			const actualFileSize = file.size;
 			const octalBytes = actualFileSize.toString(8);
 			const size = rightPad(
@@ -55,11 +58,13 @@
 			);
 
 			// @TODO fix mtime calculation - this breaks
+			// Although maybe this will just work as a value for any file - who knows?
+
 			// const time = Math.floor(new Date().getTime()/100.0);
 			// const mtime = rightPad(String(time), 12);
-			const mtime = rightPad('14640620126', 12);
 			// console.log(file.lastModified);
 			// const mtime = rightPad(file.lastModified, 12);
+			const mtime = rightPad('14640620126', 12);
 
 			const chksum = rightPad('020565', 7);
 
@@ -67,25 +72,21 @@
 
 			const typeFlag = '0';
 			const linkName = rightPad('', 100);
-			const magic = rightPad('ustar', 5);
+			const magic = rightPad('ustar', 7, ' ');
 
+			// @todo check if this can be more or less anything - maybe target root:root
 			const uname = rightPad('kminton', 32);
 			const gname = rightPad('kminton', 32);
 			const permissions = `${uname}${gname}`;
 
-			// todo fix this 
+			// @todo fix this? 
 			const devMajorDevMinorAndPrefix = rightPad('', 183);
 
-			const header = `${name}${metaData} ${typeFlag}${linkName}${magic}  \0${permissions}${devMajorDevMinorAndPrefix}`;
-
-			// console.log('fileone');
-			// console.log(fileone.size);
-
-			// const reader = new FileReader();
-
+			const header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
 
 			let output = `${header}${content}`;
 
+			// @todo does this size vary?
 			output += rightPad('', 9720);
 
 
@@ -95,8 +96,6 @@
 			anchor.href = url;
 			anchor.innerText = 'link to tar file';
 			document.body.appendChild(anchor);
-
-			// tarFile.size
 		</script>
 	</body>
 </html>
