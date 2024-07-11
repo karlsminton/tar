@@ -133,16 +133,30 @@
 			let header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
 
 
-			const parts = [name, mode, uid, gid, size, mtime, chksum, typeFlag, linkName, magic, permissions, devMajorDevMinorAndPrefix, content];
-			parts.forEach((value) => {
-				console.log('value IS %s', new TextEncoder().encode(value).length)
-			})
+			// const parts = [name, mode, uid, gid, size, mtime, chksum, typeFlag, linkName, magic, permissions, devMajorDevMinorAndPrefix, content];
+			// parts.forEach((value) => {
+			// 	console.log('value IS %s', new TextEncoder().encode(value).length)
+			// });
+
+
 			// GET CHKSUM and reassign everything again!
-			chksum = new Blob([header]).size;
+			let sum = 0;
+			for (var charCount = 0; charCount < header.length; charCount++) {
+				sum += header.charCodeAt(charCount);
+			}
+
+			chksum = rightPad(
+				leftPad(sum.toString(8), 6),
+				7
+			)
+
 			// console.log(header);
-			// console.log('CHKSUM IS %s', chksum);
+			console.log('CHKSUM IS %s', chksum);
+			
 			metaData = `${mode}${uid}${gid}${size}${mtime}${chksum}`;
 			header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
+
+			console.log(header);
 
 			let output = `${header}${content}`;
 
