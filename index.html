@@ -2,8 +2,55 @@
 <html>
 	<head>
 		<title>TapeARchive</title>
+		<style>
+			section {
+				border-radius: 15px;
+				font-family: Helvetica, Arial;
+				text-transform: uppercase;
+			}
+			#upload {
+				height: 200px;
+				align-content: center;
+				text-align: center;
+				background: gray;
+				color: wheat;
+				transition: all 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+				border: dashed transparent 2px;
+				margin-bottom: 15px;
+			}
+			.hover {
+				background-color: navy;
+				color: white;
+				border: dashed white 2px!important;
+			}
+			.row {
+				font-size: 12px;
+				display: flex;
+				flex-direction: row;
+				/* padding: 10px; */
+				border-bottom: 1px solid slategray;
+			}
+			.row:last-of-type {
+				border-bottom: none;
+			}
+			.row > * {
+  				flex-grow: 3;
+				padding: 10px;
+			}
+			.size {
+				text-align: right;
+			}
+			.row > .name {
+				flex-basis: 0;
+				flex-grow: 2;
+			}
+		</style>
 	</head>
 	<body>
+		<main>
+			<section id="upload">Drag and drop files here to create TAR</section>
+			<section id="filelist"></section>
+		</main>
 		<script>
 			function rightPad(text, desiredLength, character = '\0') {
 				const padQty = desiredLength - text.length;
@@ -66,9 +113,10 @@
 			// const mtime = rightPad(file.lastModified, 12);
 			const mtime = rightPad('14640620126', 12);
 
-			const chksum = rightPad('020565', 7);
+			// const chksum = rightPad('020565', 7);
+			let chksum = rightPad('       ', 7);
 
-			const metaData = `${mode}${uid}${gid}${size}${mtime}${chksum}`;
+			let metaData = `${mode}${uid}${gid}${size}${mtime}${chksum}`;
 
 			const typeFlag = '0';
 			const linkName = rightPad('', 100);
@@ -82,7 +130,19 @@
 			// @todo fix this? 
 			const devMajorDevMinorAndPrefix = rightPad('', 183);
 
-			const header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
+			let header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
+
+
+			const parts = [name, mode, uid, gid, size, mtime, chksum, typeFlag, linkName, magic, permissions, devMajorDevMinorAndPrefix, content];
+			parts.forEach((value) => {
+				console.log('value IS %s', new TextEncoder().encode(value).length)
+			})
+			// GET CHKSUM and reassign everything again!
+			chksum = new Blob([header]).size;
+			// console.log(header);
+			// console.log('CHKSUM IS %s', chksum);
+			metaData = `${mode}${uid}${gid}${size}${mtime}${chksum}`;
+			header = `${name}${metaData} ${typeFlag}${linkName}${magic}\0${permissions}${devMajorDevMinorAndPrefix}`;
 
 			let output = `${header}${content}`;
 
@@ -96,6 +156,83 @@
 			anchor.href = url;
 			anchor.innerText = 'link to tar file';
 			document.body.appendChild(anchor);
+		</script>
+		<script>
+			const fileList = document.getElementById('filelist');
+
+			/**
+			 *  @param {File} item 
+			 */
+			const addRow = (item) => {
+				const template = `
+				<div class="row">
+					<span class="name">
+						${item.name}
+					</span>
+					<span class="last-modified">
+						${item.lastModified}
+					</span>
+					<span class="size">
+						${Number(item.size / 1024).toFixed(2)} kb
+					</span>
+				</div>
+				`;
+
+				const html = fileList.innerHTML + template;
+				fileList.innerHTML = html;
+			}
+
+			const uploadDefaultMessage = 'Drag and drop files here to create TAR';
+			const uploadHoverMessage = 'Drop';
+
+			const dragoverHandler = (event) => {
+				event.preventDefault();
+				const element = event.target;
+
+				element.innerText = uploadHoverMessage;
+				element.classList.add('hover');
+			}
+
+			const dragoutHandler = (event) => {
+				event.preventDefault();
+				const element = event.target;
+
+				element.innerText = uploadDefaultMessage;
+				element.classList.remove('hover');
+			}
+
+			const dropHandler = (event) => {
+				/** @type {DataTransfer} */
+				const data = event.dataTransfer;
+				event.preventDefault();
+				alert('You Dropped! Check console for event data.');
+
+				// data.items.forEach((item) => {
+				// 	if (item.kind !== 'file' || item.type === '') {
+				// 		return;
+				// 	}
+
+				// 	addRow(item.getAsFile());
+				// })
+
+				for (var index = 0; index < data.items.length; index++) {
+					let item = data.items[index];
+
+					if (item.kind !== 'file' || item.type === '') {
+						continue;
+					}
+
+					addRow(item.getAsFile());
+				}
+			}
+
+			(() => {
+				const upload = document.getElementById('upload');
+				upload.addEventListener('dragover', dragoverHandler);
+				upload.addEventListener('dragleave', dragoutHandler);
+				upload.addEventListener('drop', dropHandler);
+
+			})()
 		</script>
 	</body>
 </html>
